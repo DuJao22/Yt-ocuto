@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>YouTube Background Player</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>YouTube Background Player</h1>
+            <p class="subtitle">Reproduza playlists e vídeos do YouTube em segundo plano</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="player" onclick="switchTab('player')">Player</button>
+            <button class="tab-btn" data-tab="favorites" onclick="switchTab('favorites')">Favoritos</button>
+            <button class="tab-btn" data-tab="history" onclick="switchTab('history')">Histórico</button>
+        </div>
+
+        <div id="playerTab" class="tab-content active">
+            <div class="input-section">
+                <label for="urlInput">Cole a URL da Playlist ou Vídeo do YouTube:</label>
+                <input 
+                    type="text" 
+                    id="urlInput" 
+                    placeholder="https://www.youtube.com/playlist?list=... ou https://youtu.be/..."
+                >
+            </div>
+
+            <button class="btn-load" onclick="loadMedia()">Carregar e Reproduzir</button>
+
+            <div class="player-ui" id="playerUI">
+                <div class="now-playing">
+                    <div class="track-title" id="trackTitle">Carregando...</div>
+                    <div class="track-info">
+                        <span class="playlist-position" id="playlistPos">Vídeo 1 de 1</span>
+                        <span>•</span>
+                        <span id="duration">0:00</span>
+                    </div>
+                    <div class="action-buttons">
+                        <button class="action-btn" onclick="addToFavorites()">Adicionar aos Favoritos</button>
+                    </div>
+                </div>
+
+                <div class="shuffle-repeat">
+                    <button class="toggle-btn" id="shuffleBtn" onclick="toggleShuffle()">
+                        Aleatório
+                    </button>
+                    <button class="toggle-btn" id="repeatBtn" onclick="toggleRepeat()">
+                        Repetir
+                    </button>
+                </div>
+
+                <div class="controls-grid">
+                    <button class="control-btn" onclick="previousTrack()">
+                        Anterior
+                    </button>
+                    <button class="control-btn btn-play-pause" onclick="togglePlayPause()">
+                        Pausar
+                    </button>
+                    <button class="control-btn" onclick="nextTrack()">
+                        Próximo
+                    </button>
+                </div>
+
+                <div class="volume-control">
+                    <div class="volume-label">
+                        <span>Volume</span>
+                        <span id="volumePercent">100%</span>
+                    </div>
+                    <input 
+                        type="range" 
+                        id="volumeSlider" 
+                        min="0" 
+                        max="100" 
+                        value="100" 
+                        oninput="changeVolume(this.value)"
+                    >
+                </div>
+
+                <div class="info-badge">
+                    Áudio tocando em segundo plano! Minimize a janela tranquilo.
+                </div>
+            </div>
+
+            <div class="tips">
+                <h4>Dicas de Uso:</h4>
+                <ul>
+                    <li>Cole URLs de playlists: <code>youtube.com/playlist?list=...</code></li>
+                    <li>Cole URLs de vídeos: <code>youtube.com/watch?v=...</code> ou <code>youtu.be/...</code></li>
+                    <li>O áudio continua mesmo com a aba minimizada</li>
+                    <li>Use atalhos: Espaço = Play/Pause, → = Próximo, ← = Anterior</li>
+                </ul>
+            </div>
+        </div>
+
+        <div id="favoritesTab" class="tab-content">
+            <div class="list-container" id="favoritesList">
+                <div class="empty-state">
+                    <div class="empty-state-icon">Carregando...</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="historyTab" class="tab-content">
+            <div class="list-container" id="historyList">
+                <div class="empty-state">
+                    <div class="empty-state-icon">Carregando...</div>
+                </div>
+            </div>
+            <button class="clear-btn" id="clearHistoryBtn" onclick="clearHistory()" style="display: none;">
+                Limpar Histórico
+            </button>
+        </div>
+    </div>
+
+    <div id="player"></div>
+    <div id="toast" class="toast"></div>
+
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script src="{{ url_for('static', filename='js/player.js') }}"></script>
+</body>
+</html>
