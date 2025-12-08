@@ -89,8 +89,43 @@ function onPlayerReady(event) {
     
     setTimeout(() => {
         saveToHistory();
+        setupMediaSession();
     }, 2000);
 }
+
+function setupMediaSession() {
+    if ('mediaSession' in navigator && player && player.getVideoData) {
+        const videoData = player.getVideoData();
+        navigator.mediaSession.metadata = new MediaMetadata({
+            title: videoData.title || 'YouTube Background Player',
+            artist: 'YouTube',
+            album: 'Playlist'
+        });
+        
+        navigator.mediaSession.setActionHandler('play', () => {
+            player.playVideo();
+        });
+        navigator.mediaSession.setActionHandler('pause', () => {
+            player.pauseVideo();
+        });
+        navigator.mediaSession.setActionHandler('previoustrack', () => {
+            previousTrack();
+        });
+        navigator.mediaSession.setActionHandler('nexttrack', () => {
+            nextTrack();
+        });
+    }
+}
+
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden && player && isPlaying) {
+        setTimeout(() => {
+            if (player && player.getPlayerState && player.getPlayerState() !== YT.PlayerState.PLAYING) {
+                player.playVideo();
+            }
+        }, 100);
+    }
+});
 
 function onPlayerStateChange(event) {
     if (event.data === YT.PlayerState.PLAYING) {
