@@ -1,0 +1,582 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎵 YouTube Background Player</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #7e22ce 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            box-shadow: 0 25px 80px rgba(0,0,0,0.4);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: #1e3c72;
+            font-size: 32px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .input-section {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        input {
+            width: 100%;
+            padding: 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 15px;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #7e22ce;
+            box-shadow: 0 0 0 3px rgba(126, 34, 206, 0.1);
+        }
+
+        .btn-load {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #7e22ce 0%, #1e3c72 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 17px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-load:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(126, 34, 206, 0.4);
+        }
+
+        .btn-load:active {
+            transform: translateY(-1px);
+        }
+
+        .player-ui {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .player-ui.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .now-playing {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 25px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        .track-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+
+        .track-info {
+            font-size: 14px;
+            opacity: 0.9;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .playlist-position {
+            background: rgba(255,255,255,0.2);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .control-btn {
+            padding: 16px;
+            background: #f5f5f5;
+            color: #333;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .control-btn:hover {
+            background: #e0e0e0;
+            transform: translateY(-2px);
+        }
+
+        .control-btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-play-pause {
+            grid-column: span 3;
+            background: linear-gradient(135deg, #7e22ce 0%, #1e3c72 100%);
+            color: white;
+            font-size: 18px;
+            padding: 20px;
+        }
+
+        .btn-play-pause:hover {
+            background: linear-gradient(135deg, #6b1cb0 0%, #16325e 100%);
+        }
+
+        .volume-control {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 12px;
+        }
+
+        .volume-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #ddd;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #7e22ce;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #7e22ce;
+            cursor: pointer;
+            border: none;
+        }
+
+        .info-badge {
+            text-align: center;
+            padding: 15px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-top: 20px;
+        }
+
+        .shuffle-repeat {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .toggle-btn {
+            padding: 12px;
+            background: #f5f5f5;
+            color: #666;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .toggle-btn.active {
+            background: #7e22ce;
+            color: white;
+            border-color: #7e22ce;
+        }
+
+        #player {
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+            position: absolute;
+        }
+
+        .tips {
+            margin-top: 25px;
+            padding: 20px;
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            border-radius: 8px;
+        }
+
+        .tips h4 {
+            color: #856404;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .tips ul {
+            margin-left: 20px;
+            color: #856404;
+            font-size: 13px;
+        }
+
+        .tips li {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎵 YouTube Background Player</h1>
+            <p class="subtitle">Reproduza playlists e vídeos do YouTube em segundo plano</p>
+        </div>
+
+        <div class="input-section">
+            <label for="urlInput">Cole a URL da Playlist ou Vídeo do YouTube:</label>
+            <input 
+                type="text" 
+                id="urlInput" 
+                placeholder="https://www.youtube.com/playlist?list=... ou https://youtu.be/..."
+            >
+        </div>
+
+        <button class="btn-load" onclick="loadMedia()">🚀 Carregar e Reproduzir</button>
+
+        <div class="player-ui" id="playerUI">
+            <div class="now-playing">
+                <div class="track-title" id="trackTitle">Carregando...</div>
+                <div class="track-info">
+                    <span class="playlist-position" id="playlistPos">Vídeo 1 de 1</span>
+                    <span>•</span>
+                    <span id="duration">0:00</span>
+                </div>
+            </div>
+
+            <div class="shuffle-repeat">
+                <button class="toggle-btn" id="shuffleBtn" onclick="toggleShuffle()">
+                    🔀 Aleatório
+                </button>
+                <button class="toggle-btn" id="repeatBtn" onclick="toggleRepeat()">
+                    🔁 Repetir
+                </button>
+            </div>
+
+            <div class="controls-grid">
+                <button class="control-btn" onclick="previousTrack()">
+                    ⏮️ Anterior
+                </button>
+                <button class="control-btn btn-play-pause" onclick="togglePlayPause()">
+                    ⏸️ Pausar
+                </button>
+                <button class="control-btn" onclick="nextTrack()">
+                    Próximo ⏭️
+                </button>
+            </div>
+
+            <div class="volume-control">
+                <div class="volume-label">
+                    <span>🔊 Volume</span>
+                    <span id="volumePercent">100%</span>
+                </div>
+                <input 
+                    type="range" 
+                    id="volumeSlider" 
+                    min="0" 
+                    max="100" 
+                    value="100" 
+                    oninput="changeVolume(this.value)"
+                >
+            </div>
+
+            <div class="info-badge">
+                🎧 Áudio tocando em segundo plano! Minimize a janela tranquilo.
+            </div>
+        </div>
+
+        <div class="tips">
+            <h4>💡 Dicas de Uso:</h4>
+            <ul>
+                <li>Cole URLs de playlists: <code>youtube.com/playlist?list=...</code></li>
+                <li>Cole URLs de vídeos: <code>youtube.com/watch?v=...</code> ou <code>youtu.be/...</code></li>
+                <li>O áudio continua mesmo com a aba minimizada</li>
+                <li>Use atalhos: Espaço = Play/Pause, → = Próximo, ← = Anterior</li>
+            </ul>
+        </div>
+    </div>
+
+    <div id="player"></div>
+
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script>
+        let player;
+        let isPlaying = false;
+        let isShuffle = false;
+        let isRepeat = false;
+
+        function onYouTubeIframeAPIReady() {
+            console.log('YouTube API pronta!');
+        }
+
+        function extractPlaylistId(url) {
+            const match = url.match(/[?&]list=([^&]+)/);
+            return match ? match[1] : null;
+        }
+
+        function extractVideoId(url) {
+            let match = url.match(/[?&]v=([^&]+)/);
+            if (!match) match = url.match(/youtu\.be\/([^?&]+)/);
+            if (!match) match = url.match(/youtube\.com\/embed\/([^?&]+)/);
+            return match ? match[1] : null;
+        }
+
+        function loadMedia() {
+            const url = document.getElementById('urlInput').value.trim();
+            
+            if (!url) {
+                alert('⚠️ Por favor, cole uma URL do YouTube!');
+                return;
+            }
+
+            const playlistId = extractPlaylistId(url);
+            const videoId = extractVideoId(url);
+
+            if (!playlistId && !videoId) {
+                alert('⚠️ URL inválida! Use URLs de playlists ou vídeos do YouTube.');
+                return;
+            }
+
+            document.getElementById('playerUI').classList.add('active');
+
+            if (player) {
+                player.destroy();
+            }
+
+            const config = {
+                height: '1',
+                width: '1',
+                playerVars: {
+                    autoplay: 1,
+                    controls: 0,
+                    modestbranding: 1,
+                    rel: 0,
+                    enablejsapi: 1
+                },
+                events: {
+                    onReady: onPlayerReady,
+                    onStateChange: onPlayerStateChange
+                }
+            };
+
+            if (playlistId) {
+                config.playerVars.listType = 'playlist';
+                config.playerVars.list = playlistId;
+            } else if (videoId) {
+                config.videoId = videoId;
+            }
+
+            player = new YT.Player('player', config);
+        }
+
+        function onPlayerReady(event) {
+            isPlaying = true;
+            updateUI();
+            event.target.playVideo();
+        }
+
+        function onPlayerStateChange(event) {
+            if (event.data === YT.PlayerState.PLAYING) {
+                isPlaying = true;
+                updateUI();
+            } else if (event.data === YT.PlayerState.PAUSED) {
+                isPlaying = false;
+                updateUI();
+            } else if (event.data === YT.PlayerState.ENDED) {
+                if (isRepeat) {
+                    player.seekTo(0);
+                    player.playVideo();
+                } else {
+                    nextTrack();
+                }
+            }
+        }
+
+        function togglePlayPause() {
+            if (!player) return;
+            
+            if (isPlaying) {
+                player.pauseVideo();
+            } else {
+                player.playVideo();
+            }
+        }
+
+        function nextTrack() {
+            if (!player) return;
+            player.nextVideo();
+            setTimeout(updateUI, 500);
+        }
+
+        function previousTrack() {
+            if (!player) return;
+            player.previousVideo();
+            setTimeout(updateUI, 500);
+        }
+
+        function toggleShuffle() {
+            if (!player) return;
+            isShuffle = !isShuffle;
+            player.setShuffle(isShuffle);
+            document.getElementById('shuffleBtn').classList.toggle('active', isShuffle);
+        }
+
+        function toggleRepeat() {
+            isRepeat = !isRepeat;
+            if (player) player.setLoop(isRepeat);
+            document.getElementById('repeatBtn').classList.toggle('active', isRepeat);
+        }
+
+        function changeVolume(value) {
+            if (!player) return;
+            player.setVolume(value);
+            document.getElementById('volumePercent').textContent = value + '%';
+        }
+
+        function updateUI() {
+            if (!player || !player.getVideoData) return;
+
+            const videoData = player.getVideoData();
+            const playlist = player.getPlaylist();
+            const currentIndex = player.getPlaylistIndex();
+            const duration = player.getDuration();
+
+            if (videoData.title) {
+                document.getElementById('trackTitle').textContent = videoData.title;
+            }
+
+            if (playlist && playlist.length > 0) {
+                document.getElementById('playlistPos').textContent = 
+                    `Vídeo ${currentIndex + 1} de ${playlist.length}`;
+            } else {
+                document.getElementById('playlistPos').textContent = 'Vídeo único';
+            }
+
+            if (duration) {
+                const mins = Math.floor(duration / 60);
+                const secs = Math.floor(duration % 60);
+                document.getElementById('duration').textContent = 
+                    `${mins}:${secs.toString().padStart(2, '0')}`;
+            }
+
+            const btn = document.querySelector('.btn-play-pause');
+            btn.textContent = isPlaying ? '⏸️ Pausar' : '▶️ Reproduzir';
+        }
+
+        // Atualiza UI a cada 2 segundos
+        setInterval(() => {
+            if (player && isPlaying) {
+                updateUI();
+            }
+        }, 2000);
+
+        // Atalhos de teclado
+        document.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT') return;
+            
+            switch(e.code) {
+                case 'Space':
+                    e.preventDefault();
+                    togglePlayPause();
+                    break;
+                case 'ArrowRight':
+                    e.preventDefault();
+                    nextTrack();
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    previousTrack();
+                    break;
+            }
+        });
+    </script>
+</body>
+</html>
