@@ -52,6 +52,8 @@ def login():
             db.session.commit()
             login_user(user, remember=form.remember_me.data)
             next_page = request.args.get('next')
+            if next_page and not next_page.startswith('/'):
+                next_page = None
             flash('Login realizado com sucesso!', 'success')
             return redirect(next_page or url_for('index'))
         flash('Email ou senha incorretos.', 'error')
