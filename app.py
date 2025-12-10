@@ -7,14 +7,10 @@ from flask_login import LoginManager, login_user, logout_user, login_required, c
 from database import init_db, get_db, User
 from forms import LoginForm, RegistrationForm
 
-# Importar Object Storage do Replit
-try:
-    from replit.object_storage import Client
-    storage_client = Client()
-    STORAGE_AVAILABLE = True
-except ImportError:
-    STORAGE_AVAILABLE = False
-    print("⚠️ Replit Object Storage não disponível. Downloads serão temporários.")
+# Configuração de armazenamento para Render
+STORAGE_AVAILABLE = False
+DOWNLOADS_DIR = '/tmp/downloads'
+print("⚠️ Usando armazenamento temporário. Downloads serão perdidos no redeploy.")
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY') or os.environ.get('SESSION_SECRET', 'dev-secret-key-change-in-production')
@@ -352,12 +348,11 @@ def api_download_audio():
         return jsonify({'error': 'URL do YouTube é obrigatória'}), 400
 
     try:
-        downloads_dir = '/tmp/downloads'
-        os.makedirs(downloads_dir, exist_ok=True)
+        os.makedirs(DOWNLOADS_DIR, exist_ok=True)
 
         ydl_opts = {
             'format': 'bestaudio/best',
-            'outtmpl': os.path.join(downloads_dir, '%(title)s.%(ext)s'),
+            'outtmpl': os.path.join(DOWNLOADS_DIR, '%(title)s.%(ext)s'),
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'mp3',
@@ -373,13 +368,7 @@ def api_download_audio():
             title = info.get('title', 'audio')
             safe_title = "".join(c for c in title if c.isalnum() or c in (' ', '-', '_')).strip()
             filename = f"{safe_title}.mp3"
-            filepath = os.path.join(downloads_dir, filename)
-
-            # Salvar no Object Storage se disponível
-            if STORAGE_AVAILABLE:
-                storage_key = f"user_{current_user.id}/{filename}"
-                with open(filepath, 'rb') as audio_file:
-                    storage_client.upload_from_bytes(storage_key, audio_file.read())
+            filepath = os.path.join(DOWNLOADS_DIR, filename)
 
             # Registrar no banco de dados
             conn = get_db()
@@ -404,12 +393,11 @@ def api_download_playlist():
         return jsonify({'error': 'URL do YouTube é obrigatória'}), 400
 
     try:
-        downloads_dir = '/tmp/downloads'
-        os.makedirs(downloads_dir, exist_ok=True)
+        os.makedirs(DOWNLOADS_DIR, exist_ok=True)
 
         ydl_opts = {
             'format': 'bestaudio/best',
-            'outtmpl': os.path.join(downloads_dir, '%(playlist_index)s - %(title)s.%(ext)s'),
+            'outtmpl': os.path.join(DOWNLOADS_DIR, '%(playlist_index)s - %(title)s.%(ext)s'),
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'mp3',
@@ -434,19 +422,6 @@ def api_download_playlist():
                         safe_title = "".join(c for c in title if c.isalnum() or c in (' ', '-', '_')).strip()
                         filename = f"{safe_title}.mp3"
                         
-                        # Salvar no Object Storage
-                        if STORAGE_AVAILABLE:
-                            filepath = None
-                            for f in os.listdir(downloads_dir):
-                                if f.endswith('.mp3') and title in f:
-                                    filepath = os.path.join(downloads_dir, f)
-                                    break
-                            
-                            if filepath and os.path.exists(filepath):
-                                storage_key = f"user_{current_user.id}/{filename}"
-                                with open(filepath, 'rb') as audio_file:
-                                    storage_client.upload_from_bytes(storage_key, audio_file.read())
-                        
                         cursor.execute('''
                             INSERT INTO downloads (user_id, title, youtube_url, filename)
                             VALUES (?, ?, ?, ?)
@@ -458,7 +433,7 @@ def api_download_playlist():
 
             return jsonify({
                 'success': True,
-                'message': f'{count} músicas salvas na biblioteca!',
+                'message': f'{count} músicas registradas (download temporário)!',
                 'total': count
             })
 
@@ -483,20 +458,14 @@ def api_get_library():
 
         library = []
         for row in downloads:
-            # Verificar se o arquivo existe no Object Storage
-            if STORAGE_AVAILABLE:
-                storage_key = f"user_{current_user.id}/{row['filename']}"
-                try:
-                    # Tentar acessar o arquivo
-                    storage_client.download_as_text(storage_key)
-                    library.append({
-                        'title': row['title'],
-                        'filename': row['filename'],
-                        'downloaded_at': row['downloaded_at']
-                    })
-                except:
-                    # Arquivo não existe no storage
-                    pass
+            # Verificar se o arquivo existe localmente
+            filepath = os.path.join(DOWNLOADS_DIR, row['filename'])
+            if os.path.exists(filepath):
+                library.append({
+                    'title': row['title'],
+                    'filename': row['filename'],
+                    'downloaded_at': row['downloaded_at']
+                })
 
         return jsonify(library)
 
@@ -506,33 +475,29 @@ def api_get_library():
 @app.route('/api/library/stream/<path:filename>', methods=['GET'])
 @login_required
 def api_stream_audio(filename):
-    """Stream de áudio do Object Storage"""
-    if not STORAGE_AVAILABLE:
-        return jsonify({'error': 'Object Storage não disponível'}), 503
-
+    """Stream de áudio local"""
     try:
-        storage_key = f"user_{current_user.id}/{filename}"
-        audio_bytes = storage_client.download_as_bytes(storage_key)
+        filepath = os.path.join(DOWNLOADS_DIR, filename)
+        if not os.path.exists(filepath):
+            return jsonify({'error': 'Arquivo não encontrado'}), 404
         
         return send_file(
-            BytesIO(audio_bytes),
+            filepath,
             mimetype='audio/mpeg',
             as_attachment=False,
             download_name=filename
         )
     except Exception as e:
-        return jsonify({'error': f'Arquivo não encontrado: {str(e)}'}), 404
+        return jsonify({'error': f'Erro ao carregar áudio: {str(e)}'}), 500
 
 @app.route('/api/library/<path:filename>', methods=['DELETE'])
 @login_required
 def api_delete_library_track(filename):
     """Excluir música da biblioteca do usuário"""
-    if not STORAGE_AVAILABLE:
-        return jsonify({'error': 'Object Storage não disponível'}), 503
-
     try:
-        storage_key = f"user_{current_user.id}/{filename}"
-        storage_client.delete(storage_key)
+        filepath = os.path.join(DOWNLOADS_DIR, filename)
+        if os.path.exists(filepath):
+            os.remove(filepath)
         
         # Remover do banco de dados
         conn = get_db()
