@@ -369,6 +369,62 @@ async function downloadAudio() {
     }
 }
 
+async function downloadPlaylist() {
+    if (!currentUrl) {
+        showToast('Nenhuma playlist carregada', 'error');
+        return;
+    }
+    
+    if (!currentPlaylistId) {
+        showToast('Isso não é uma playlist. Use o botão "Baixar Áudio" para vídeos individuais', 'error');
+        return;
+    }
+    
+    showToast('Preparando download da playlist... Isso pode levar vários minutos', 'info');
+    
+    try {
+        const response = await fetch('/api/download-playlist', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                youtube_url: currentUrl
+            })
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            showToast(error.error || 'Erro ao baixar playlist', 'error');
+            return;
+        }
+        
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        
+        const contentDisposition = response.headers.get('Content-Disposition');
+        let filename = 'playlist.zip';
+        if (contentDisposition) {
+            const filenameMatch = contentDisposition.match(/filename="?(.+)"?/);
+            if (filenameMatch) filename = filenameMatch[1];
+        }
+        
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        showToast('Download da playlist concluído! ✓', 'success');
+    } catch (error) {
+        showToast('Erro ao baixar playlist', 'error');
+        console.error('Erro:', error);
+    }
+}
+
 async function loadFavorites() {
     try {
         const response = await fetch('/api/favorites');

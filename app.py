@@ -143,6 +143,64 @@ def api_download_audio():
     except Exception as e:
         return jsonify({'error': f'Erro ao baixar áudio: {str(e)}'}), 500
 
+@app.route('/api/download-playlist', methods=['POST'])
+def api_download_playlist():
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'Dados inválidos'}), 400
+    
+    youtube_url = data.get('youtube_url')
+    if not youtube_url:
+        return jsonify({'error': 'URL do YouTube é obrigatória'}), 400
+    
+    try:
+        import zipfile
+        import shutil
+        from datetime import datetime
+        
+        downloads_dir = os.path.join(os.getcwd(), 'downloads')
+        playlist_dir = os.path.join(downloads_dir, f'playlist_{datetime.now().strftime("%Y%m%d_%H%M%S")}')
+        os.makedirs(playlist_dir, exist_ok=True)
+        
+        ydl_opts = {
+            'format': 'bestaudio/best',
+            'outtmpl': os.path.join(playlist_dir, '%(playlist_index)s - %(title)s.%(ext)s'),
+            'postprocessors': [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'mp3',
+                'preferredquality': '192',
+            }],
+            'quiet': True,
+            'no_warnings': True,
+            'ignoreerrors': True,
+        }
+        
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(youtube_url, download=True)
+            playlist_title = info.get('title', 'playlist')
+            
+            zip_filename = f"{playlist_title}.zip"
+            zip_filepath = os.path.join(downloads_dir, zip_filename)
+            
+            with zipfile.ZipFile(zip_filepath, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                for root, dirs, files in os.walk(playlist_dir):
+                    for file in files:
+                        file_path = os.path.join(root, file)
+                        arcname = os.path.basename(file_path)
+                        zipf.write(file_path, arcname)
+            
+            shutil.rmtree(playlist_dir)
+            
+            return send_file(
+                zip_filepath,
+                as_attachment=True,
+                download_name=zip_filename,
+                mimetype='application/zip'
+            )
+    
+    except Exception as e:
+        return jsonify({'error': f'Erro ao baixar playlist: {str(e)}'}), 500
+
 @app.after_request
 def add_cache_control(response):
     response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
