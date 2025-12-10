@@ -123,6 +123,7 @@ def api_download_audio():
                 'preferredcodec': 'mp3',
                 'preferredquality': '192',
             }],
+            'keepvideo': False,
             'quiet': True,
             'no_warnings': True,
         }
@@ -165,6 +166,7 @@ def api_download_playlist():
                 'preferredcodec': 'mp3',
                 'preferredquality': '192',
             }],
+            'keepvideo': False,
             'quiet': False,
             'no_warnings': False,
             'ignoreerrors': True,
@@ -204,9 +206,9 @@ def api_get_library():
     
     files = []
     for filename in os.listdir(downloads_dir):
-        if filename.endswith('.mp3') or filename.endswith('.webm'):
+        if filename.endswith('.mp3'):
             filepath = os.path.join(downloads_dir, filename)
-            title = filename.replace('.mp3', '').replace('.webm', '')
+            title = filename.replace('.mp3', '')
             # Remove numeração de playlist do início do nome
             if ' - ' in title and title.split(' - ')[0].isdigit():
                 title = ' - '.join(title.split(' - ')[1:])
@@ -226,8 +228,10 @@ def api_stream_audio(filename):
     if not os.path.exists(filepath):
         return jsonify({'error': 'Arquivo não encontrado'}), 404
     
-    mimetype = 'audio/mpeg' if filename.endswith('.mp3') else 'audio/webm'
-    return send_file(filepath, mimetype=mimetype)
+    if not filename.endswith('.mp3'):
+        return jsonify({'error': 'Apenas arquivos MP3 são suportados'}), 400
+    
+    return send_file(filepath, mimetype='audio/mpeg')
 
 @app.route('/api/library/<path:filename>', methods=['DELETE'])
 def api_delete_library_track(filename):
