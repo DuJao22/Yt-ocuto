@@ -829,6 +829,8 @@ input[type="range"]::-moz-range-thumb {
 .library-item:hover {
     transform: translateX(5px);
     box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    cursor: pointer;
+    background: #f0f0f0;
 }
 
 .library-item.playing {

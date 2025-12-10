@@ -165,24 +165,35 @@ def api_download_playlist():
                 'preferredcodec': 'mp3',
                 'preferredquality': '192',
             }],
-            'quiet': True,
-            'no_warnings': True,
+            'quiet': False,
+            'no_warnings': False,
             'ignoreerrors': True,
+            'extract_flat': False,
         }
         
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(youtube_url, download=True)
-            playlist_title = info.get('title', 'playlist')
-            total_videos = len(info.get('entries', []))
+            
+            if 'entries' in info:
+                total_videos = sum(1 for entry in info['entries'] if entry is not None)
+                playlist_title = info.get('title', 'playlist')
+            else:
+                total_videos = 1
+                playlist_title = info.get('title', 'video')
+            
+            mp3_files = [f for f in os.listdir(downloads_dir) if f.endswith('.mp3')]
             
             return jsonify({
                 'success': True,
-                'message': f'{total_videos} músicas baixadas para a biblioteca!',
+                'message': f'{len(mp3_files)} músicas baixadas para a biblioteca!',
                 'playlist_title': playlist_title,
-                'total': total_videos
+                'total': len(mp3_files)
             })
     
     except Exception as e:
+        import traceback
+        error_detail = traceback.format_exc()
+        print(f"Erro ao baixar playlist: {error_detail}")
         return jsonify({'error': f'Erro ao baixar playlist: {str(e)}'}), 500
 
 @app.route('/api/library', methods=['GET'])

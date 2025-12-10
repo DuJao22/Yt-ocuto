@@ -406,6 +406,7 @@ async function downloadPlaylist() {
         
         setTimeout(() => {
             switchTab('library');
+            loadLibrary();
         }, 1500);
         
     } catch (error) {
@@ -693,12 +694,12 @@ async function loadLibrary() {
         }
         
         container.innerHTML = libraryTracks.map((track, index) => `
-            <div class="library-item" data-index="${index}">
+            <div class="library-item" data-index="${index}" onclick="libraryPlayTrack(${index})" style="cursor: pointer;">
                 <div class="library-item-info">
                     <div class="library-item-title">${escapeHtml(track.title)}</div>
                     <div class="library-item-duration">${track.duration || 'Duração desconhecida'}</div>
                 </div>
-                <div class="library-item-actions">
+                <div class="library-item-actions" onclick="event.stopPropagation();">
                     <button class="library-item-btn" onclick="libraryPlayTrack(${index})">▶️</button>
                     <button class="library-item-btn" onclick="deleteLibraryTrack('${encodeURIComponent(track.filename)}')">🗑️</button>
                 </div>
