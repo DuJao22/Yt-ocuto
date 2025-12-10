@@ -1,5 +1,7 @@
 # YouTube Background Player
 
+**Desenvolvido por Joao Layon - Desenvolvedor Full Stack**
+
 ## Visão Geral
 Aplicação web para reproduzir vídeos e playlists do YouTube em segundo plano, com sistema de favoritos e histórico de reprodução.
 

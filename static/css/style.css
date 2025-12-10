@@ -604,3 +604,24 @@ input[type="range"]::-moz-range-thumb {
 .toast.error {
     background: #dc3545;
 }
+
+.credits {
+    text-align: center;
+    padding: 20px;
+    width: 100%;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+
+.credits-text {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 13px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.credits strong {
+    color: white;
+    font-weight: 700;
+}
