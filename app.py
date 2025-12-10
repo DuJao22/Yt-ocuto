@@ -204,9 +204,12 @@ def api_get_library():
     
     files = []
     for filename in os.listdir(downloads_dir):
-        if filename.endswith('.mp3'):
+        if filename.endswith('.mp3') or filename.endswith('.webm'):
             filepath = os.path.join(downloads_dir, filename)
-            title = filename.replace('.mp3', '')
+            title = filename.replace('.mp3', '').replace('.webm', '')
+            # Remove numeração de playlist do início do nome
+            if ' - ' in title and title.split(' - ')[0].isdigit():
+                title = ' - '.join(title.split(' - ')[1:])
             files.append({
                 'filename': filename,
                 'title': title,
@@ -223,7 +226,8 @@ def api_stream_audio(filename):
     if not os.path.exists(filepath):
         return jsonify({'error': 'Arquivo não encontrado'}), 404
     
-    return send_file(filepath, mimetype='audio/mpeg')
+    mimetype = 'audio/mpeg' if filename.endswith('.mp3') else 'audio/webm'
+    return send_file(filepath, mimetype=mimetype)
 
 @app.route('/api/library/<path:filename>', methods=['DELETE'])
 def api_delete_library_track(filename):
