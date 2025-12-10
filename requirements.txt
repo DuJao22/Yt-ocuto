@@ -1,3 +1,9 @@
 flask>=3.1.2
 gunicorn>=23.0.0
 yt-dlp
+flask-login
+flask-wtf
+email-validator
+flask-sqlalchemy
+psycopg2-binary
+werkzeug

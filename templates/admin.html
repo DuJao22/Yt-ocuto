@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Administrativo - YouTube Background Player</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+</head>
+<body>
+    <div class="admin-container">
+        <div class="admin-header">
+            <div class="admin-title">
+                <h1>Painel Administrativo</h1>
+                <p>Gerencie usuários e monitore downloads</p>
+            </div>
+            <div class="admin-actions">
+                <a href="{{ url_for('index') }}" class="btn-back">Voltar ao Player</a>
+                <a href="{{ url_for('logout') }}" class="btn-logout">Sair</a>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">👥</div>
+                <div class="stat-info">
+                    <div class="stat-value">{{ total_users }}</div>
+                    <div class="stat-label">Usuários Registrados</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⬇️</div>
+                <div class="stat-info">
+                    <div class="stat-value">{{ total_downloads }}</div>
+                    <div class="stat-label">Total de Downloads</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="admin-tabs">
+            <button class="admin-tab-btn active" onclick="switchAdminTab('users')">Usuários</button>
+            <button class="admin-tab-btn" onclick="switchAdminTab('downloads')">Downloads</button>
+        </div>
+
+        <div id="usersTab" class="admin-tab-content active">
+            <div class="table-container">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Usuário</th>
+                            <th>Email</th>
+                            <th>Admin</th>
+                            <th>Criado em</th>
+                            <th>Último Login</th>
+                            <th>Downloads</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody">
+                        {% for user in users %}
+                        <tr data-user-id="{{ user.id }}">
+                            <td>{{ user.id }}</td>
+                            <td>{{ user.username }}</td>
+                            <td>{{ user.email }}</td>
+                            <td>
+                                <span class="badge {{ 'badge-admin' if user.is_admin else 'badge-user' }}">
+                                    {{ 'Admin' if user.is_admin else 'Usuário' }}
+                                </span>
+                            </td>
+                            <td>{{ user.created_at.strftime('%d/%m/%Y %H:%M') if user.created_at else '-' }}</td>
+                            <td>{{ user.last_login.strftime('%d/%m/%Y %H:%M') if user.last_login else 'Nunca' }}</td>
+                            <td>{{ user.download_count }}</td>
+                            <td class="actions-cell">
+                                <button class="btn-action btn-toggle" onclick="toggleAdmin({{ user.id }})" title="Alternar Admin">
+                                    👑
+                                </button>
+                                <button class="btn-action btn-delete" onclick="deleteUser({{ user.id }})" title="Excluir">
+                                    🗑️
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="downloadsTab" class="admin-tab-content">
+            <div class="table-container">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Usuário</th>
+                            <th>Título</th>
+                            <th>Data</th>
+                        </tr>
+                    </thead>
+                    <tbody id="downloadsTableBody">
+                        {% for download in recent_downloads %}
+                        <tr>
+                            <td>{{ download.id }}</td>
+                            <td>{{ download.user.username }}</td>
+                            <td class="title-cell">{{ download.title }}</td>
+                            <td>{{ download.downloaded_at.strftime('%d/%m/%Y %H:%M') if download.downloaded_at else '-' }}</td>
+                        </tr>
+                        {% endfor %}
+                        {% if not recent_downloads %}
+                        <tr>
+                            <td colspan="4" class="empty-cell">Nenhum download registrado</td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        function switchAdminTab(tab) {
+            document.querySelectorAll('.admin-tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.admin-tab-content').forEach(content => content.classList.remove('active'));
+            
+            document.querySelector(`[onclick="switchAdminTab('${tab}')"]`).classList.add('active');
+            document.getElementById(`${tab}Tab`).classList.add('active');
+        }
+
+        async function toggleAdmin(userId) {
+            if (!confirm('Deseja alterar o status de administrador deste usuário?')) return;
+            
+            try {
+                const response = await fetch(`/api/admin/users/${userId}/toggle-admin`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showToast('Status de admin alterado!', 'success');
+                    location.reload();
+                } else {
+                    showToast(data.error || 'Erro ao alterar status', 'error');
+                }
+            } catch (error) {
+                showToast('Erro ao alterar status', 'error');
+            }
+        }
+
+        async function deleteUser(userId) {
+            if (!confirm('ATENÇÃO: Isso excluirá o usuário e todos os seus dados. Continuar?')) return;
+            
+            try {
+                const response = await fetch(`/api/admin/users/${userId}`, {
+                    method: 'DELETE'
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showToast('Usuário excluído!', 'success');
+                    document.querySelector(`tr[data-user-id="${userId}"]`).remove();
+                } else {
+                    showToast(data.error || 'Erro ao excluir usuário', 'error');
+                }
+            } catch (error) {
+                showToast('Erro ao excluir usuário', 'error');
+            }
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast show ${type}`;
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
