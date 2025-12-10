@@ -382,7 +382,7 @@ async function downloadPlaylist() {
         return;
     }
     
-    showToast('Preparando download da playlist... Isso pode levar vários minutos', 'info');
+    showToast('Baixando playlist para a biblioteca... Isso pode levar vários minutos', 'info');
     
     try {
         const response = await fetch('/api/download-playlist', {
@@ -395,32 +395,19 @@ async function downloadPlaylist() {
             })
         });
         
+        const data = await response.json();
+        
         if (!response.ok) {
-            const error = await response.json();
-            showToast(error.error || 'Erro ao baixar playlist', 'error');
+            showToast(data.error || 'Erro ao baixar playlist', 'error');
             return;
         }
         
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = url;
+        showToast(`✓ ${data.total} músicas baixadas! Abrindo biblioteca...`, 'success');
         
-        const contentDisposition = response.headers.get('Content-Disposition');
-        let filename = 'playlist.zip';
-        if (contentDisposition) {
-            const filenameMatch = contentDisposition.match(/filename="?(.+)"?/);
-            if (filenameMatch) filename = filenameMatch[1];
-        }
+        setTimeout(() => {
+            switchTab('library');
+        }, 1500);
         
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-        
-        showToast('Download da playlist concluído! ✓', 'success');
     } catch (error) {
         showToast('Erro ao baixar playlist', 'error');
         console.error('Erro:', error);

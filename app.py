@@ -154,17 +154,12 @@ def api_download_playlist():
         return jsonify({'error': 'URL do YouTube é obrigatória'}), 400
     
     try:
-        import zipfile
-        import shutil
-        from datetime import datetime
-        
         downloads_dir = os.path.join(os.getcwd(), 'downloads')
-        playlist_dir = os.path.join(downloads_dir, f'playlist_{datetime.now().strftime("%Y%m%d_%H%M%S")}')
-        os.makedirs(playlist_dir, exist_ok=True)
+        os.makedirs(downloads_dir, exist_ok=True)
         
         ydl_opts = {
             'format': 'bestaudio/best',
-            'outtmpl': os.path.join(playlist_dir, '%(playlist_index)s - %(title)s.%(ext)s'),
+            'outtmpl': os.path.join(downloads_dir, '%(playlist_index)s - %(title)s.%(ext)s'),
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'mp3',
@@ -178,25 +173,14 @@ def api_download_playlist():
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(youtube_url, download=True)
             playlist_title = info.get('title', 'playlist')
+            total_videos = len(info.get('entries', []))
             
-            zip_filename = f"{playlist_title}.zip"
-            zip_filepath = os.path.join(downloads_dir, zip_filename)
-            
-            with zipfile.ZipFile(zip_filepath, 'w', zipfile.ZIP_DEFLATED) as zipf:
-                for root, dirs, files in os.walk(playlist_dir):
-                    for file in files:
-                        file_path = os.path.join(root, file)
-                        arcname = os.path.basename(file_path)
-                        zipf.write(file_path, arcname)
-            
-            shutil.rmtree(playlist_dir)
-            
-            return send_file(
-                zip_filepath,
-                as_attachment=True,
-                download_name=zip_filename,
-                mimetype='application/zip'
-            )
+            return jsonify({
+                'success': True,
+                'message': f'{total_videos} músicas baixadas para a biblioteca!',
+                'playlist_title': playlist_title,
+                'total': total_videos
+            })
     
     except Exception as e:
         return jsonify({'error': f'Erro ao baixar playlist: {str(e)}'}), 500
