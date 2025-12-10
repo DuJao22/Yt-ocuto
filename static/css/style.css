@@ -645,23 +645,29 @@ input[type="range"]::-moz-range-thumb {
 
 .credits {
     text-align: center;
-    padding: 20px;
+    padding: 15px 20px;
     width: 100%;
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .credits-text {
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 13px;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 500;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    letter-spacing: 0.3px;
 }
 
 .credits-text strong {
-    color: #007AFF;
-    font-weight: 600;
+    color: #00D4FF;
+    font-weight: 700;
+    text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
 }
 
 .library-player {
