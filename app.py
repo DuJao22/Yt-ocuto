@@ -1,5 +1,6 @@
 import os
-from flask import Flask, render_template, request, jsonify
+import yt_dlp
+from flask import Flask, render_template, request, jsonify, send_file
 from database import (
     init_db, add_to_history, get_history, clear_history,
     add_favorite, get_favorites, remove_favorite,
@@ -99,6 +100,48 @@ def api_create_playlist():
 def api_delete_playlist(playlist_id):
     delete_playlist(playlist_id)
     return jsonify({'success': True, 'message': 'Playlist removida'})
+
+@app.route('/api/download-audio', methods=['POST'])
+def api_download_audio():
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'Dados inválidos'}), 400
+    
+    youtube_url = data.get('youtube_url')
+    if not youtube_url:
+        return jsonify({'error': 'URL do YouTube é obrigatória'}), 400
+    
+    try:
+        downloads_dir = os.path.join(os.getcwd(), 'downloads')
+        os.makedirs(downloads_dir, exist_ok=True)
+        
+        ydl_opts = {
+            'format': 'bestaudio/best',
+            'outtmpl': os.path.join(downloads_dir, '%(title)s.%(ext)s'),
+            'postprocessors': [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'mp3',
+                'preferredquality': '192',
+            }],
+            'quiet': True,
+            'no_warnings': True,
+        }
+        
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(youtube_url, download=True)
+            title = info.get('title', 'audio')
+            filename = f"{title}.mp3"
+            filepath = os.path.join(downloads_dir, filename)
+            
+            return send_file(
+                filepath,
+                as_attachment=True,
+                download_name=filename,
+                mimetype='audio/mpeg'
+            )
+    
+    except Exception as e:
+        return jsonify({'error': f'Erro ao baixar áudio: {str(e)}'}), 500
 
 @app.after_request
 def add_cache_control(response):

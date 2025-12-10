@@ -318,6 +318,57 @@ async function addToFavorites() {
     }
 }
 
+async function downloadAudio() {
+    if (!currentUrl) {
+        showToast('Nenhum vídeo carregado', 'error');
+        return;
+    }
+    
+    showToast('Preparando download... Isso pode levar alguns segundos', 'info');
+    
+    try {
+        const response = await fetch('/api/download-audio', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                youtube_url: currentUrl
+            })
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            showToast(error.error || 'Erro ao baixar áudio', 'error');
+            return;
+        }
+        
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        
+        const contentDisposition = response.headers.get('Content-Disposition');
+        let filename = 'audio.mp3';
+        if (contentDisposition) {
+            const filenameMatch = contentDisposition.match(/filename="?(.+)"?/);
+            if (filenameMatch) filename = filenameMatch[1];
+        }
+        
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        showToast('Download iniciado! ✓', 'success');
+    } catch (error) {
+        showToast('Erro ao baixar áudio', 'error');
+        console.error('Erro:', error);
+    }
+}
+
 async function loadFavorites() {
     try {
         const response = await fetch('/api/favorites');
