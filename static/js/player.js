@@ -404,10 +404,13 @@ async function downloadPlaylist() {
         
         showToast(`✓ ${data.total} músicas baixadas! Abrindo biblioteca...`, 'success');
         
+        // Mudar para a aba da biblioteca e atualizar imediatamente
+        switchTab('library');
+        
+        // Aguardar 2 segundos para garantir que os arquivos foram salvos
         setTimeout(() => {
-            switchTab('library');
             loadLibrary();
-        }, 1500);
+        }, 2000);
         
     } catch (error) {
         showToast('Erro ao baixar playlist', 'error');
@@ -589,8 +592,10 @@ libraryAudio.addEventListener('loadedmetadata', () => {
 });
 
 document.getElementById('libraryProgressBar').addEventListener('input', (e) => {
-    const time = (e.target.value / 100) * libraryAudio.duration;
-    libraryAudio.currentTime = time;
+    if (libraryAudio.duration && isFinite(libraryAudio.duration)) {
+        const time = (e.target.value / 100) * libraryAudio.duration;
+        libraryAudio.currentTime = time;
+    }
 });
 
 document.getElementById('libraryVolume').addEventListener('input', (e) => {
@@ -677,11 +682,19 @@ function libraryToggleRepeat() {
 }
 
 async function loadLibrary() {
+    const container = document.getElementById('libraryList');
+    
+    // Mostrar loading
+    container.innerHTML = `
+        <div class="empty-state">
+            <div class="empty-state-icon">⏳</div>
+            <div class="empty-state-text">Carregando biblioteca...</div>
+        </div>
+    `;
+    
     try {
         const response = await fetch('/api/library');
         libraryTracks = await response.json();
-        
-        const container = document.getElementById('libraryList');
         
         if (libraryTracks.length === 0) {
             container.innerHTML = `
@@ -697,7 +710,7 @@ async function loadLibrary() {
             <div class="library-item" data-index="${index}" onclick="libraryPlayTrack(${index})" style="cursor: pointer;">
                 <div class="library-item-info">
                     <div class="library-item-title">${escapeHtml(track.title)}</div>
-                    <div class="library-item-duration">${track.duration || 'Duração desconhecida'}</div>
+                    <div class="library-item-duration">${formatDate(track.downloaded_at)}</div>
                 </div>
                 <div class="library-item-actions" onclick="event.stopPropagation();">
                     <button class="library-item-btn" onclick="libraryPlayTrack(${index})">▶️</button>
@@ -705,8 +718,16 @@ async function loadLibrary() {
                 </div>
             </div>
         `).join('');
+        
+        showToast(`${libraryTracks.length} música(s) na biblioteca`, 'success');
     } catch (error) {
         console.error('Erro ao carregar biblioteca:', error);
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">❌</div>
+                <div class="empty-state-text">Erro ao carregar biblioteca.<br>Tente novamente.</div>
+            </div>
+        `;
     }
 }
 

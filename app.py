@@ -413,7 +413,7 @@ def api_download_playlist():
 
         ydl_opts = {
             'format': 'bestaudio/best',
-            'outtmpl': os.path.join(DOWNLOADS_DIR, '%(playlist_index)s - %(title)s.%(ext)s'),
+            'outtmpl': os.path.join(DOWNLOADS_DIR, '%(title)s.%(ext)s'),
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'mp3',
@@ -438,18 +438,25 @@ def api_download_playlist():
                         safe_title = "".join(c for c in title if c.isalnum() or c in (' ', '-', '_')).strip()
                         filename = f"{safe_title}.mp3"
                         
+                        # Verificar se já existe para evitar duplicatas
                         cursor.execute('''
-                            INSERT INTO downloads (user_id, title, youtube_url, filename)
-                            VALUES (?, ?, ?, ?)
-                        ''', (current_user.id, title, data['youtube_url'], filename))
-                        count += 1
+                            SELECT id FROM downloads 
+                            WHERE user_id = ? AND filename = ?
+                        ''', (current_user.id, filename))
+                        
+                        if not cursor.fetchone():
+                            cursor.execute('''
+                                INSERT INTO downloads (user_id, title, youtube_url, filename)
+                                VALUES (?, ?, ?, ?)
+                            ''', (current_user.id, title, entry.get('webpage_url', data['youtube_url']), filename))
+                            count += 1
 
             conn.commit()
             conn.close()
 
             return jsonify({
                 'success': True,
-                'message': f'{count} músicas registradas (download temporário)!',
+                'message': f'{count} músicas baixadas com sucesso!',
                 'total': count
             })
 
