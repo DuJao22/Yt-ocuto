@@ -2,6 +2,8 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, SubmitField
 from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError
 from database import get_db
+# Assuming User model is available and has a get_by_email method
+# from models import User 
 
 
 class LoginForm(FlaskForm):
@@ -26,7 +28,7 @@ class RegistrationForm(FlaskForm):
         EqualTo('password', message='As senhas devem ser iguais')
     ])
     submit = SubmitField('Criar Conta')
-    
+
     def validate_username(self, username):
         conn = get_db()
         cursor = conn.cursor()
@@ -35,7 +37,7 @@ class RegistrationForm(FlaskForm):
         conn.close()
         if user:
             raise ValidationError('Este nome de usuário já está em uso.')
-    
+
     def validate_email(self, email):
         conn = get_db()
         cursor = conn.cursor()
@@ -43,4 +45,4 @@ class RegistrationForm(FlaskForm):
         user = cursor.fetchone()
         conn.close()
         if user:
-            raise ValidationError('Este email já está cadastrado.'rado.')
+            raise ValidationError('Este email já está cadastrado.')
