@@ -1,0 +1,28 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FF0000;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#CC0000;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#990000;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="240" fill="url(#bgGrad)"/>
+  
+  <!-- Musical note -->
+  <path d="M 320 140 L 320 300 C 320 330 295 350 265 350 C 235 350 210 330 210 300 C 210 270 235 250 265 250 C 275 250 285 252 295 256 L 295 180 L 360 165 L 360 130 Z" fill="#FFFFFF"/>
+  <circle cx="265" cy="300" r="30" fill="#FFFFFF"/>
+  <ellipse cx="265" cy="300" rx="30" ry="15" fill="#FFD700"/>
+  
+  <!-- Play button (YouTube style) -->
+  <path d="M 200 340 L 200 420 L 270 380 Z" fill="#FFFFFF"/>
+  
+  <!-- Sound waves -->
+  <path d="M 140 230 Q 120 250 140 270" stroke="#FFFFFF" stroke-width="12" fill="none" stroke-linecap="round" opacity="0.8"/>
+  <path d="M 110 210 Q 80 250 110 290" stroke="#FFFFFF" stroke-width="12" fill="none" stroke-linecap="round" opacity="0.6"/>
+  
+  <path d="M 372 230 Q 392 250 372 270" stroke="#FFFFFF" stroke-width="12" fill="none" stroke-linecap="round" opacity="0.8"/>
+  <path d="M 402 210 Q 432 250 402 290" stroke="#FFFFFF" stroke-width="12" fill="none" stroke-linecap="round" opacity="0.6"/>
+</svg>

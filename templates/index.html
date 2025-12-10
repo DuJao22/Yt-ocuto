@@ -6,7 +6,33 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>YouTube Background Player</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="YouTube Background Player - Reproduza playlists e vídeos do YouTube em segundo plano, baixe áudios em MP3 e gerencie seus favoritos. Desenvolvido por João Layon, Full Stack Developer.">
+    <meta name="keywords" content="YouTube, background player, music player, MP3 download, playlist, João Layon">
+    <meta name="author" content="João Layon">
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="YouTube Background Player - by João Layon">
+    <meta property="og:description" content="Reproduza playlists do YouTube em segundo plano, baixe áudios em MP3 e gerencie favoritos. Aplicativo mobile-first desenvolvido por João Layon, Full Stack Developer.">
+    <meta property="og:image" content="{{ url_for('static', filename='images/og-image.png', _external=True) }}">
+    <meta property="og:url" content="{{ request.url }}">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="YouTube Background Player">
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="YouTube Background Player - by João Layon">
+    <meta name="twitter:description" content="Reproduza playlists do YouTube em segundo plano, baixe áudios em MP3 e gerencie favoritos. Desenvolvido por João Layon.">
+    <meta name="twitter:image" content="{{ url_for('static', filename='images/og-image.png', _external=True) }}">
+    <meta name="twitter:creator" content="@joaolayon">
+    
+    <!-- Favicons -->
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='images/favicon.svg') }}">
+    <link rel="alternate icon" href="{{ url_for('static', filename='images/favicon.svg') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/favicon.svg') }}">
+    
+    <title>YouTube Background Player - by João Layon</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
 </head>

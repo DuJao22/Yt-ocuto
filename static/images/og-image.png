@@ -1,0 +1,29 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="ogBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e3c72;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#2a5298;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7e22ce;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <rect width="1200" height="630" fill="url(#ogBg)"/>
+  
+  <!-- Musical notes decoration -->
+  <text x="100" y="150" font-family="Arial, sans-serif" font-size="120" fill="#FFFFFF" opacity="0.3">♪</text>
+  <text x="1050" y="500" font-family="Arial, sans-serif" font-size="120" fill="#FFFFFF" opacity="0.3">♫</text>
+  
+  <!-- Main title -->
+  <text x="600" y="220" font-family="Arial, sans-serif" font-size="72" font-weight="bold" fill="#FFFFFF" text-anchor="middle">YouTube Background Player</text>
+  
+  <!-- Subtitle -->
+  <text x="600" y="290" font-family="Arial, sans-serif" font-size="36" fill="#E0E0E0" text-anchor="middle">Reproduza playlists em segundo plano</text>
+  
+  <!-- Features -->
+  <text x="600" y="370" font-family="Arial, sans-serif" font-size="28" fill="#FFD700" text-anchor="middle">🎵 Download MP3 • 📱 Mobile-First • ⭐ Favoritos</text>
+  
+  <!-- Credits -->
+  <text x="600" y="520" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="#FFFFFF" text-anchor="middle">Desenvolvido por João Layon</text>
+  <text x="600" y="570" font-family="Arial, sans-serif" font-size="24" fill="#E0E0E0" text-anchor="middle">Full Stack Developer</text>
+</svg>

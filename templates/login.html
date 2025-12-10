@@ -3,7 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - YouTube Background Player</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Faça login no YouTube Background Player - Sistema desenvolvido por João Layon para reproduzir playlists do YouTube em segundo plano.">
+    <meta name="author" content="João Layon">
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Login - YouTube Background Player by João Layon">
+    <meta property="og:description" content="Acesse o YouTube Background Player. Desenvolvido por João Layon, Full Stack Developer.">
+    <meta property="og:image" content="{{ url_for('static', filename='images/og-image.png', _external=True) }}">
+    <meta property="og:type" content="website">
+    
+    <!-- Favicons -->
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='images/favicon.svg') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/favicon.svg') }}">
+    
+    <title>Login - YouTube Background Player by João Layon</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
 </head>
