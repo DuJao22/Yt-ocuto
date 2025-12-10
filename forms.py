@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, SubmitField
 from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError
-from models import User
+from database import get_db
 
 
 class LoginForm(FlaskForm):
@@ -28,11 +28,19 @@ class RegistrationForm(FlaskForm):
     submit = SubmitField('Criar Conta')
     
     def validate_username(self, username):
-        user = User.query.filter_by(username=username.data).first()
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute('SELECT id FROM users WHERE username = ?', (username.data,))
+        user = cursor.fetchone()
+        conn.close()
         if user:
             raise ValidationError('Este nome de usuário já está em uso.')
     
     def validate_email(self, email):
-        user = User.query.filter_by(email=email.data).first()
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute('SELECT id FROM users WHERE email = ?', (email.data,))
+        user = cursor.fetchone()
+        conn.close()
         if user:
-            raise ValidationError('Este email já está cadastrado.')
+            raise ValidationError('Este email já está cadastrado.'rado.')
