@@ -100,21 +100,37 @@ def admin():
     recent_downloads = cursor.fetchall()
     conn.close()
 
+    # Converter strings de data para objetos datetime
+    def parse_datetime(date_str):
+        if not date_str:
+            return None
+        try:
+            return datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+        except:
+            return None
+
     user_stats = [{
         'id': u.id,
         'username': u.username,
         'email': u.email,
         'is_admin': u.is_admin,
-        'created_at': u.created_at,
-        'last_login': u.last_login,
+        'created_at': parse_datetime(u.created_at),
+        'last_login': parse_datetime(u.last_login),
         'download_count': u.get_download_count()
     } for u in users]
+
+    downloads_list = [{
+        'id': row['id'],
+        'user': {'username': row['username']},
+        'title': row['title'],
+        'downloaded_at': parse_datetime(row['downloaded_at'])
+    } for row in recent_downloads]
 
     return render_template('admin.html', 
                           users=user_stats, 
                           total_users=total_users,
                           total_downloads=total_downloads,
-                          recent_downloads=recent_downloads)
+                          recent_downloads=downloads_list)
 
 @app.route('/api/admin/users', methods=['GET'])
 @login_required
