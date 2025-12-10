@@ -17,7 +17,8 @@
         </div>
 
         <div class="tabs">
-            <button class="tab-btn active" data-tab="player" onclick="switchTab('player')">Player</button>
+            <button class="tab-btn active" data-tab="player" onclick="switchTab('player')">YouTube</button>
+            <button class="tab-btn" data-tab="library" onclick="switchTab('library')">🎵 Biblioteca</button>
             <button class="tab-btn" data-tab="favorites" onclick="switchTab('favorites')">Favoritos</button>
             <button class="tab-btn" data-tab="history" onclick="switchTab('history')">Histórico</button>
         </div>
@@ -98,6 +99,47 @@
                     <li>O áudio continua mesmo com a aba minimizada</li>
                     <li>Use atalhos: Espaço = Play/Pause, → = Próximo, ← = Anterior</li>
                 </ul>
+            </div>
+        </div>
+
+        <div id="libraryTab" class="tab-content">
+            <div class="library-player">
+                <div class="library-now-playing">
+                    <div class="library-track-title" id="libraryTrackTitle">Nenhuma música selecionada</div>
+                    <div class="library-track-info">
+                        <span id="libraryCurrentTime">0:00</span>
+                        <span>/</span>
+                        <span id="libraryDuration">0:00</span>
+                    </div>
+                </div>
+
+                <div class="library-progress-container">
+                    <input type="range" id="libraryProgressBar" min="0" max="100" value="0" class="library-progress-bar">
+                </div>
+
+                <div class="library-controls">
+                    <button class="library-control-btn" onclick="libraryPrevious()">⏮️</button>
+                    <button class="library-control-btn library-play-pause" id="libraryPlayBtn" onclick="libraryTogglePlay()">▶️</button>
+                    <button class="library-control-btn" onclick="libraryNext()">⏭️</button>
+                </div>
+
+                <div class="library-volume">
+                    <span>🔊</span>
+                    <input type="range" id="libraryVolume" min="0" max="100" value="70" class="library-volume-slider">
+                    <span id="libraryVolumePercent">70%</span>
+                </div>
+            </div>
+
+            <div class="library-actions">
+                <button class="action-btn" onclick="libraryToggleShuffle()" id="libraryShuffleBtn">🔀 Aleatório</button>
+                <button class="action-btn" onclick="libraryToggleRepeat()" id="libraryRepeatBtn">🔁 Repetir</button>
+            </div>
+
+            <div class="library-list" id="libraryList">
+                <div class="empty-state">
+                    <div class="empty-state-icon">🎵</div>
+                    <div class="empty-state-text">Nenhuma música na biblioteca.<br>Baixe músicas do YouTube!</div>
+                </div>
             </div>
         </div>
 

@@ -201,6 +201,46 @@ def api_download_playlist():
     except Exception as e:
         return jsonify({'error': f'Erro ao baixar playlist: {str(e)}'}), 500
 
+@app.route('/api/library', methods=['GET'])
+def api_get_library():
+    downloads_dir = os.path.join(os.getcwd(), 'downloads')
+    if not os.path.exists(downloads_dir):
+        return jsonify([])
+    
+    files = []
+    for filename in os.listdir(downloads_dir):
+        if filename.endswith('.mp3'):
+            filepath = os.path.join(downloads_dir, filename)
+            title = filename.replace('.mp3', '')
+            files.append({
+                'filename': filename,
+                'title': title,
+                'duration': None
+            })
+    
+    return jsonify(files)
+
+@app.route('/api/library/stream/<path:filename>', methods=['GET'])
+def api_stream_audio(filename):
+    downloads_dir = os.path.join(os.getcwd(), 'downloads')
+    filepath = os.path.join(downloads_dir, filename)
+    
+    if not os.path.exists(filepath):
+        return jsonify({'error': 'Arquivo não encontrado'}), 404
+    
+    return send_file(filepath, mimetype='audio/mpeg')
+
+@app.route('/api/library/<path:filename>', methods=['DELETE'])
+def api_delete_library_track(filename):
+    downloads_dir = os.path.join(os.getcwd(), 'downloads')
+    filepath = os.path.join(downloads_dir, filename)
+    
+    if os.path.exists(filepath):
+        os.remove(filepath)
+        return jsonify({'success': True, 'message': 'Arquivo excluído'})
+    
+    return jsonify({'error': 'Arquivo não encontrado'}), 404
+
 @app.after_request
 def add_cache_control(response):
     response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'

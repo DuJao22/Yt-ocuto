@@ -255,6 +255,8 @@ function switchTab(tabName) {
         loadFavorites();
     } else if (tabName === 'history') {
         loadHistory();
+    } else if (tabName === 'library') {
+        loadLibrary();
     }
 }
 
@@ -570,7 +572,170 @@ function formatDate(dateString) {
     });
 }
 
+let libraryAudio = new Audio();
+let libraryTracks = [];
+let libraryCurrentIndex = -1;
+let libraryIsPlaying = false;
+let libraryShuffle = false;
+let libraryRepeat = false;
+
+libraryAudio.addEventListener('timeupdate', () => {
+    if (libraryAudio.duration) {
+        const progress = (libraryAudio.currentTime / libraryAudio.duration) * 100;
+        document.getElementById('libraryProgressBar').value = progress;
+        document.getElementById('libraryCurrentTime').textContent = formatTime(libraryAudio.currentTime);
+    }
+});
+
+libraryAudio.addEventListener('ended', () => {
+    if (libraryRepeat) {
+        libraryAudio.currentTime = 0;
+        libraryAudio.play();
+    } else {
+        libraryNext();
+    }
+});
+
+libraryAudio.addEventListener('loadedmetadata', () => {
+    document.getElementById('libraryDuration').textContent = formatTime(libraryAudio.duration);
+});
+
+document.getElementById('libraryProgressBar').addEventListener('input', (e) => {
+    const time = (e.target.value / 100) * libraryAudio.duration;
+    libraryAudio.currentTime = time;
+});
+
+document.getElementById('libraryVolume').addEventListener('input', (e) => {
+    libraryAudio.volume = e.target.value / 100;
+    document.getElementById('libraryVolumePercent').textContent = e.target.value + '%';
+});
+
+function formatTime(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+function libraryTogglePlay() {
+    if (libraryCurrentIndex === -1 && libraryTracks.length > 0) {
+        libraryPlayTrack(0);
+        return;
+    }
+    
+    if (libraryIsPlaying) {
+        libraryAudio.pause();
+        libraryIsPlaying = false;
+        document.getElementById('libraryPlayBtn').textContent = '▶️';
+    } else {
+        libraryAudio.play();
+        libraryIsPlaying = true;
+        document.getElementById('libraryPlayBtn').textContent = '⏸️';
+    }
+}
+
+function libraryPlayTrack(index) {
+    if (index < 0 || index >= libraryTracks.length) return;
+    
+    libraryCurrentIndex = index;
+    const track = libraryTracks[index];
+    
+    libraryAudio.src = `/api/library/stream/${encodeURIComponent(track.filename)}`;
+    libraryAudio.play();
+    libraryIsPlaying = true;
+    
+    document.getElementById('libraryTrackTitle').textContent = track.title;
+    document.getElementById('libraryPlayBtn').textContent = '⏸️';
+    
+    document.querySelectorAll('.library-item').forEach((item, i) => {
+        item.classList.toggle('playing', i === index);
+    });
+}
+
+function libraryNext() {
+    if (libraryTracks.length === 0) return;
+    
+    let nextIndex;
+    if (libraryShuffle) {
+        nextIndex = Math.floor(Math.random() * libraryTracks.length);
+    } else {
+        nextIndex = (libraryCurrentIndex + 1) % libraryTracks.length;
+    }
+    
+    libraryPlayTrack(nextIndex);
+}
+
+function libraryPrevious() {
+    if (libraryTracks.length === 0) return;
+    
+    let prevIndex;
+    if (libraryShuffle) {
+        prevIndex = Math.floor(Math.random() * libraryTracks.length);
+    } else {
+        prevIndex = libraryCurrentIndex - 1;
+        if (prevIndex < 0) prevIndex = libraryTracks.length - 1;
+    }
+    
+    libraryPlayTrack(prevIndex);
+}
+
+function libraryToggleShuffle() {
+    libraryShuffle = !libraryShuffle;
+    document.getElementById('libraryShuffleBtn').classList.toggle('active', libraryShuffle);
+}
+
+function libraryToggleRepeat() {
+    libraryRepeat = !libraryRepeat;
+    document.getElementById('libraryRepeatBtn').classList.toggle('active', libraryRepeat);
+}
+
+async function loadLibrary() {
+    try {
+        const response = await fetch('/api/library');
+        libraryTracks = await response.json();
+        
+        const container = document.getElementById('libraryList');
+        
+        if (libraryTracks.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">🎵</div>
+                    <div class="empty-state-text">Nenhuma música na biblioteca.<br>Baixe músicas do YouTube!</div>
+                </div>
+            `;
+            return;
+        }
+        
+        container.innerHTML = libraryTracks.map((track, index) => `
+            <div class="library-item" data-index="${index}">
+                <div class="library-item-info">
+                    <div class="library-item-title">${escapeHtml(track.title)}</div>
+                    <div class="library-item-duration">${track.duration || 'Duração desconhecida'}</div>
+                </div>
+                <div class="library-item-actions">
+                    <button class="library-item-btn" onclick="libraryPlayTrack(${index})">▶️</button>
+                    <button class="library-item-btn" onclick="deleteLibraryTrack('${encodeURIComponent(track.filename)}')">🗑️</button>
+                </div>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('Erro ao carregar biblioteca:', error);
+    }
+}
+
+async function deleteLibraryTrack(filename) {
+    if (!confirm('Deseja realmente excluir esta música?')) return;
+    
+    try {
+        await fetch(`/api/library/${filename}`, { method: 'DELETE' });
+        showToast('Música excluída', 'success');
+        loadLibrary();
+    } catch (error) {
+        showToast('Erro ao excluir música', 'error');
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     loadFavorites();
     loadHistory();
+    libraryAudio.volume = 0.7;
 });
