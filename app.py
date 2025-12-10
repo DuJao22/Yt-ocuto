@@ -3,7 +3,7 @@ import yt_dlp
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify, send_file, redirect, url_for, flash
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-from models import db, User, Download
+from models import db, User, Download, History, Favorite, Playlist
 from forms import LoginForm, RegistrationForm
 
 app = Flask(__name__)
@@ -220,55 +220,144 @@ def api_get_stats():
 @app.route('/api/history', methods=['GET'])
 @login_required
 def api_get_history():
-    return jsonify([])
+    limit = request.args.get('limit', 50, type=int)
+    history = History.query.filter_by(user_id=current_user.id).order_by(History.played_at.desc()).limit(limit).all()
+    return jsonify([h.to_dict() for h in history])
 
 
 @app.route('/api/history', methods=['POST'])
 @login_required
 def api_add_history():
-    return jsonify({'success': True, 'message': 'OK'})
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'Dados inválidos'}), 400
+    
+    title = data.get('title', 'Sem título')
+    youtube_url = data.get('youtube_url')
+    video_id = data.get('video_id')
+    playlist_id = data.get('playlist_id')
+    thumbnail = data.get('thumbnail')
+    
+    if not youtube_url:
+        return jsonify({'error': 'URL do YouTube é obrigatória'}), 400
+    
+    history_item = History(
+        user_id=current_user.id,
+        title=title,
+        youtube_url=youtube_url,
+        video_id=video_id,
+        playlist_id=playlist_id,
+        thumbnail=thumbnail
+    )
+    db.session.add(history_item)
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Adicionado ao histórico'})
 
 
 @app.route('/api/history', methods=['DELETE'])
 @login_required
 def api_clear_history():
-    return jsonify({'success': True, 'message': 'OK'})
+    History.query.filter_by(user_id=current_user.id).delete()
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Histórico limpo'})
 
 
 @app.route('/api/favorites', methods=['GET'])
 @login_required
 def api_get_favorites():
-    return jsonify([])
+    favorites = Favorite.query.filter_by(user_id=current_user.id).order_by(Favorite.added_at.desc()).all()
+    return jsonify([f.to_dict() for f in favorites])
 
 
 @app.route('/api/favorites', methods=['POST'])
 @login_required
 def api_add_favorite():
-    return jsonify({'success': True, 'message': 'OK'})
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'Dados inválidos'}), 400
+    
+    title = data.get('title', 'Sem título')
+    youtube_url = data.get('youtube_url')
+    video_id = data.get('video_id')
+    playlist_id = data.get('playlist_id')
+    thumbnail = data.get('thumbnail')
+    
+    if not youtube_url:
+        return jsonify({'error': 'URL do YouTube é obrigatória'}), 400
+    
+    existing = Favorite.query.filter_by(user_id=current_user.id, youtube_url=youtube_url).first()
+    if existing:
+        return jsonify({'success': False, 'message': 'Já está nos favoritos'})
+    
+    favorite = Favorite(
+        user_id=current_user.id,
+        title=title,
+        youtube_url=youtube_url,
+        video_id=video_id,
+        playlist_id=playlist_id,
+        thumbnail=thumbnail
+    )
+    db.session.add(favorite)
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Adicionado aos favoritos'})
 
 
 @app.route('/api/favorites/<int:favorite_id>', methods=['DELETE'])
 @login_required
 def api_remove_favorite(favorite_id):
-    return jsonify({'success': True, 'message': 'OK'})
+    favorite = Favorite.query.filter_by(id=favorite_id, user_id=current_user.id).first()
+    if favorite:
+        db.session.delete(favorite)
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Removido dos favoritos'})
+    return jsonify({'error': 'Favorito não encontrado'}), 404
 
 
 @app.route('/api/playlists', methods=['GET'])
 @login_required
 def api_get_playlists():
-    return jsonify([])
+    playlists = Playlist.query.filter_by(user_id=current_user.id).order_by(Playlist.created_at.desc()).all()
+    return jsonify([p.to_dict() for p in playlists])
 
 
 @app.route('/api/playlists', methods=['POST'])
 @login_required
 def api_create_playlist():
-    return jsonify({'success': True, 'message': 'OK'})
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'Dados inválidos'}), 400
+    
+    name = data.get('name')
+    youtube_url = data.get('youtube_url')
+    video_id = data.get('video_id')
+    playlist_id = data.get('playlist_id')
+    thumbnail = data.get('thumbnail')
+    
+    if not name or not youtube_url:
+        return jsonify({'error': 'Nome e URL são obrigatórios'}), 400
+    
+    playlist = Playlist(
+        user_id=current_user.id,
+        name=name,
+        youtube_url=youtube_url,
+        video_id=video_id,
+        playlist_id=playlist_id,
+        thumbnail=thumbnail
+    )
+    db.session.add(playlist)
+    db.session.commit()
+    return jsonify({'success': True, 'id': playlist.id, 'message': 'Playlist criada'})
 
 
 @app.route('/api/playlists/<int:playlist_id>', methods=['DELETE'])
 @login_required
 def api_delete_playlist(playlist_id):
-    return jsonify({'success': True, 'message': 'OK'})
+    playlist = Playlist.query.filter_by(id=playlist_id, user_id=current_user.id).first()
+    if playlist:
+        db.session.delete(playlist)
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Playlist removida'})
+    return jsonify({'error': 'Playlist não encontrada'}), 404
 
 
 @app.route('/api/download-audio', methods=['POST'])

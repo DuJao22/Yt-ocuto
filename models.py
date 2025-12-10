@@ -54,3 +54,81 @@ class Download(db.Model):
             'filename': self.filename,
             'downloaded_at': self.downloaded_at.isoformat() if self.downloaded_at else None
         }
+
+
+class History(db.Model):
+    __tablename__ = 'history'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    title = db.Column(db.String(500), nullable=False)
+    youtube_url = db.Column(db.String(500), nullable=False)
+    video_id = db.Column(db.String(50))
+    playlist_id = db.Column(db.String(100))
+    thumbnail = db.Column(db.String(500))
+    played_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    user = db.relationship('User', backref=db.backref('history_items', lazy='dynamic'))
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'title': self.title,
+            'youtube_url': self.youtube_url,
+            'video_id': self.video_id,
+            'playlist_id': self.playlist_id,
+            'thumbnail': self.thumbnail,
+            'played_at': self.played_at.isoformat() if self.played_at else None
+        }
+
+
+class Favorite(db.Model):
+    __tablename__ = 'favorites'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    title = db.Column(db.String(500), nullable=False)
+    youtube_url = db.Column(db.String(500), nullable=False)
+    video_id = db.Column(db.String(50))
+    playlist_id = db.Column(db.String(100))
+    thumbnail = db.Column(db.String(500))
+    added_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    user = db.relationship('User', backref=db.backref('favorites', lazy='dynamic'))
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'title': self.title,
+            'youtube_url': self.youtube_url,
+            'video_id': self.video_id,
+            'playlist_id': self.playlist_id,
+            'thumbnail': self.thumbnail,
+            'added_at': self.added_at.isoformat() if self.added_at else None
+        }
+
+
+class Playlist(db.Model):
+    __tablename__ = 'playlists'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    name = db.Column(db.String(200), nullable=False)
+    youtube_url = db.Column(db.String(500), nullable=False)
+    video_id = db.Column(db.String(50))
+    playlist_id = db.Column(db.String(100))
+    thumbnail = db.Column(db.String(500))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    user = db.relationship('User', backref=db.backref('playlists', lazy='dynamic'))
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'youtube_url': self.youtube_url,
+            'video_id': self.video_id,
+            'playlist_id': self.playlist_id,
+            'thumbnail': self.thumbnail,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
